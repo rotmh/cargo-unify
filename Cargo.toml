@@ -2,6 +2,12 @@
 name = "cargo-unify"
 version = "0.1.0"
 edition = "2024"
+authors = ["Rotem Horesh (rotmh)"]
+license = "MIT"
+description = "A tool to unify crates into single buildable files."
+readme = "README.md"
+repository = "https://github.com/rotmh/cargo-unify"
+keywords = ["unify", "subcommand", "bundle", "cargo"]
 
 [dependencies]
 anyhow = "1.0"
