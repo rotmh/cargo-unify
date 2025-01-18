@@ -8,27 +8,31 @@ use std::{
 use anyhow::{Context, anyhow, bail};
 use clap::Parser;
 
+// cargo invokes this subcommand as `cargo-unify unify ...`,
+// thus we define this single enum variant.
 #[derive(Parser, Debug)]
-#[command(name = "unify")]
 #[command(about = "A tool to unify crates into one buildable file")]
-struct Cli {
-    /// If set, a lib crate will be unified.
-    #[arg(long, default_value_t = false)]
-    lib: bool,
+enum Cli {
+    Unify {
+        /// If set, a lib crate will be unified.
+        #[arg(long, default_value_t = false)]
+        lib: bool,
 
-    /// If set, a bin crate will be unified (default).
-    #[arg(long, default_value_t = false)]
-    bin: bool,
+        /// If set, a bin crate will be unified (default).
+        #[arg(long, default_value_t = false)]
+        bin: bool,
 
-    /// Path to the crate root (i.e., where the `src` is). If not set, will default to current dir.
-    #[arg(long, default_value = ".")]
-    path: PathBuf,
+        /// Path to the crate root (i.e., where the `src` is). If not set, will default to current dir.
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+    },
 }
 
 impl Cli {
     pub fn validate(&self) -> anyhow::Result<()> {
-        if self.bin && self.lib {
-            bail!("Cannot set both --lib and --bin");
+        let &Self::Unify { lib, bin, .. } = self;
+        if bin && lib {
+            bail!("Cannot set both --lib and --bin")
         }
         Ok(())
     }
@@ -36,11 +40,12 @@ impl Cli {
 
 fn main() -> anyhow::Result<()> {
     let args = Cli::parse();
-
     args.validate()?;
 
-    let file_name = if !args.lib { "main.rs" } else { "lib.rs" };
-    let path = extend_path(&args.path, &["src", file_name]);
+    let Cli::Unify { lib, path, .. } = args;
+
+    let file_name = if !lib { "main.rs" } else { "lib.rs" };
+    let path = extend_path(&path, &["src", file_name]);
 
     let expanded = expand(&read_path(&path)?, &path)?;
 
