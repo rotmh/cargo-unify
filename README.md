@@ -1,6 +1,6 @@
 # `cargo-unify`
 
-A tool to unify crates into one buildable file.
+A tool to unify crates into single buildable files.
 
 ## Usage
 
@@ -19,7 +19,7 @@ cd cargo-unify
 cargo build --release
 ```
 
-Make sure to move the binary (in `target/release/cargo-unify` to somewhere in your `$PATH`).
+Make sure to move the binary (in `target/release/cargo-unify`) to somewhere in your `$PATH`.
 
 ### Options
 
