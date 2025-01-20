@@ -93,10 +93,10 @@ fn mod_declarations(file: &str) -> anyhow::Result<impl Iterator<Item = (String, 
 
     let decls = ast.items.into_iter().filter_map(|item| {
         if let syn::Item::Mod(syn::ItemMod { semi, ident, .. }) = item
-            && let Some(syn::token::Semi { spans }) = semi
+            && let Some(syn::token::Semi { spans: [semi] }) = semi
         {
             // Position of the semicolon at the end of the module declaration
-            let pos = spans[0].start();
+            let pos = semi.start();
             let idx = file
                 .lines()
                 .take(pos.line) // The line is 1-indexed
