@@ -1,7 +1,7 @@
 use super::*;
 
 /// Path to the mock testing crate.
-const TESTS_PATH: &str = "../_test/src";
+const TESTS_PATH: &str = "_test/src";
 
 #[test]
 fn test_expand() {
