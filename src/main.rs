@@ -1,11 +1,34 @@
 #![feature(let_chains)]
 
-use std::path::PathBuf;
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
-use anyhow::bail;
+use anyhow::Context;
 use clap::Parser;
 
-use cargo_unify::{expand, extend_path, read_path};
+use cargo_unify::expand;
+
+enum CrateType {
+    Lib,
+    Bin,
+}
+
+impl CrateType {
+    pub fn base_file(&self, parent: &Path) -> PathBuf {
+        let file_name = match self {
+            Self::Lib => "lib.rs",
+            Self::Bin => "main.rs",
+        };
+
+        let mut path = parent.to_path_buf();
+        path.push("src");
+        path.push(file_name);
+
+        path
+    }
+}
 
 // cargo invokes this subcommand as `cargo-unify unify ...`,
 // thus we define this single enum variant.
@@ -14,11 +37,11 @@ use cargo_unify::{expand, extend_path, read_path};
 enum Cli {
     Unify {
         /// If set, a lib crate will be unified.
-        #[arg(long, default_value_t = false)]
+        #[arg(long, group = "crate_type")]
         lib: bool,
 
         /// If set, a bin crate will be unified (default).
-        #[arg(long, default_value_t = false)]
+        #[arg(long, group = "crate_type")]
         bin: bool,
 
         /// Path to the crate root (i.e., where the `src` is). If not set, will default to current dir.
@@ -27,26 +50,23 @@ enum Cli {
     },
 }
 
-impl Cli {
-    pub fn validate(&self) -> anyhow::Result<()> {
-        let &Self::Unify { lib, bin, .. } = self;
-        if bin && lib {
-            bail!("Cannot set both --lib and --bin")
-        }
-        Ok(())
-    }
-}
-
 fn main() -> anyhow::Result<()> {
     let args = Cli::parse();
-    args.validate()?;
-
     let Cli::Unify { lib, path, .. } = args;
 
-    let file_name = if !lib { "main.rs" } else { "lib.rs" };
-    let path = extend_path(&path, &["src", file_name]);
+    let crate_type = if lib { CrateType::Lib } else { CrateType::Bin };
 
-    let expanded = expand(&read_path(&path)?, &path)?;
+    let path = crate_type.base_file(&path);
+    let content = fs::read_to_string(&path).with_context(|| {
+        format!(
+            "Failed to read file `{}`.
+Maybe you meant to choose another crate type? (`--lib` or `--bin`)
+Note: `--bin` is the default.",
+            &path.display()
+        )
+    })?;
+
+    let expanded = expand(&content, &path)?;
 
     println!("{}", expanded);
 

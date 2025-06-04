@@ -10,6 +10,10 @@ use std::{
 
 use anyhow::{Context, anyhow};
 
+macro_rules! extend_path {
+    ($base:expr, $($seg:expr),*) => {};
+}
+
 /// Recursively expand module declerations.
 pub fn expand(file: &str, path: &Path) -> anyhow::Result<String> {
     let dir = mod_dir(path)?;
@@ -77,10 +81,10 @@ fn mod_declarations(file: &str) -> anyhow::Result<impl Iterator<Item = (String, 
 
 /// Finds a module's directory for the module in the provided path.
 ///
-/// If the path file name is `main.rs` or `lib.rs`, it is not considered a module,
-/// and the module directory is the parent directory of the path.
-/// Otherwise, the module directory is the parent directory of the path with the
-/// module name appended.
+/// If the path file name is `main.rs`, `mod.rs` or `lib.rs`, it is not
+/// considered a module, and the module directory is the parent directory
+/// of the path. Otherwise, the module directory is the parent directory
+/// of the path with the module name appended.
 ///
 /// Examples:
 /// `src/main.rs` -> `src/`
@@ -114,16 +118,19 @@ fn get_mod(name: &str, parent: &Path) -> anyhow::Result<(String, PathBuf)> {
         }
     }
 
-    Err(anyhow!("Couldn't find module file for module `{name}`"))
+    Err(anyhow!(
+        "Couldn't find module file for module `{name}` in directory `{}`",
+        parent.display()
+    ))
 }
 
 #[inline]
-pub fn read_path(path: &Path) -> anyhow::Result<String> {
+fn read_path(path: &Path) -> anyhow::Result<String> {
     fs::read_to_string(path).with_context(|| format!("Failed to read path {}", path.display()))
 }
 
 /// Join `base` with `nodes`.
-pub fn extend_path(base: &Path, nodes: &[&str]) -> PathBuf {
+fn extend_path(base: &Path, nodes: &[&str]) -> PathBuf {
     let mut path = base.to_path_buf();
 
     for node in nodes {

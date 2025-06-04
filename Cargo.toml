@@ -8,6 +8,7 @@ description = "A tool to unify crates into single buildable files."
 readme = "README.md"
 repository = "https://github.com/rotmh/cargo-unify"
 keywords = ["unify", "subcommand", "bundle", "cargo"]
+exclude = [".ignore"]
 
 [dependencies]
 anyhow = "1.0"
